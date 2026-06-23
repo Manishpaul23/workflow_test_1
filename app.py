@@ -1,4 +1,5 @@
 import sqlite3
+import os
 
 def get_user_data(username):
     """
@@ -7,9 +8,9 @@ def get_user_data(username):
     """
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    # Flaw: String formatting used to construct SQL query
-    query = f"SELECT * FROM users WHERE username = '{username}'"
-    cursor.execute(query)
+    # Fix: Use parameterized query to prevent SQL Injection
+    query = "SELECT * FROM users WHERE username = ?"
+    cursor.execute(query, (username,))
     return cursor.fetchall()
 
 def do_aws_stuff():
@@ -17,9 +18,9 @@ def do_aws_stuff():
     Hardcoded secret.
     This will be flagged by Secret Scanning tools (like Gitleaks).
     """
-    # Flaw: Hardcoded AWS access keys
-    aws_access_key_id = "AKIAIOSFODNN7EXAMPLE" 
-    aws_secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    # Fix: Retrieve secrets securely via environment variables
+    aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
+    aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
     
     print("Connecting to AWS...")
     return True
