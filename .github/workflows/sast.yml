@@ -1,0 +1,46 @@
+name: SAST and Secret Scan
+
+on:
+  push:
+    branches: [ "feature-testing" ]
+  pull_request:
+    branches: [ "feature-testing" ]
+
+jobs:
+  security-scan:
+    name: Code and Secret Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for Gitleaks to scan all commits in the push
+
+      # 2. Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      # 3. Install Bandit for static code analysis
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+
+      # 4. Run Bandit to scan for insecure Python code
+      - name: Run Bandit (SAST)
+        run: |
+          # The -r flag is recursive, -ll filters for medium and high severity
+          bandit -r . -ll
+          
+      # 5. Run Gitleaks to scan for hardcoded secrets
+      - name: Run Gitleaks (Secret Scanning)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Note: If you want the workflow to pass even if secrets are found initially,
+        # you can uncomment the next line:
+        # continue-on-error: true
